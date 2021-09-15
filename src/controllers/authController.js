@@ -2,6 +2,8 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authConfig = require('../config/auth');
+const crypto = require('crypto');
+const mailer = require('../modules/mailer');
 
 function tokenCreator(id) {
   // informa o dado que nunca vai se repetir,
@@ -50,5 +52,51 @@ module.exports = {
     const token = tokenCreator({ id: user._id });
 
     return res.send({ user, token });
+  },
+
+  // Rota /forgot_password
+  async forgot_password(req, res) {
+    const { email } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(400).send({ error: 'User not found' });
+      }
+
+      // token e data de expriração
+      const token = crypto.randomBytes(20).toString('hex');
+      const now = new Date();
+      now.setHours(now.getHours() + 1); // hora atual + 1 hora
+
+      // busca e atualiza determinados campos do usuario
+      await User.findByIdAndUpdate(user.id, {
+        $set: {
+          passwordResetToken: token,
+          passwordResetExpires: now,
+        },
+      });
+
+      // envia email para recuperar a senha
+      mailer.sendMail(
+        {
+          to: email,
+          from: 'lucass.lv.lv@gmail.com',
+          template: 'auth/forgot_password', // template html para o email
+          context: { token }, // variaveis usuadas no email
+        },
+        (err) => {
+          if (err)
+            return res
+              .status(400)
+              .send({ error: 'Cannot send forgot password email' });
+
+          return res.send()
+        }
+      );
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ error: 'Error on forgot password, try again' });
+    }
   },
 };
