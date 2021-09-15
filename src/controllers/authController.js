@@ -90,13 +90,49 @@ module.exports = {
               .status(400)
               .send({ error: 'Cannot send forgot password email' });
 
-          return res.send()
+          return res.send();
         }
       );
     } catch (err) {
       return res
         .status(400)
         .send({ error: 'Error on forgot password, try again' });
+    }
+  },
+
+  // Rota /reset_password
+  async reset_password(req, res) {
+    const { email, token, password } = req.body;
+    try {
+      const user = await User.findOne({ email }).select(
+        '+passwordResetToken passwordResetExpires'
+      );
+
+      // verifica se existe um user com esse email
+      if (!user) return res.status(400).send({ error: 'User not found' });
+
+      // verifica se o token enviado bate coom o token no bd
+      if (token !== user.passwordResetToken)
+        return res.status(400).send({ error: 'Token invalid' });
+
+      // verifica se o token está expirado
+      const now = new Date();
+      if (now > user.passwordResetExpires)
+        return res
+          .status(400)
+          .send({ error: 'Token expired, generate a new one' });
+
+      // atualiza a senha do usuario
+      user.password = password;
+      await user.save();
+
+
+      return res.status(200).send()
+
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ error: 'Cannot reset password, try again' });
     }
   },
 };

@@ -9,6 +9,7 @@ const projectController = require('./controllers/projectController');
 routes.post('/auth/register', authController.register);
 routes.post('/auth/autheticate', authController.autheticate);
 routes.post('/auth/forgot_password', authController.forgot_password);
+routes.post('/auth/reset_password', authController.reset_password);
 
 // Requisições protegidas via middlewares
 // Rota /projects
