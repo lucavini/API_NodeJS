@@ -13,7 +13,12 @@ routes.post('/auth/reset_password', authController.reset_password);
 
 // Requisições protegidas via middlewares
 // Rota /projects
-routes.get('/projects',projectController.projects);
+routes.get('/projects',projectController.getAllprojects);
+routes.get('/projects/:projectId',projectController.getProject);
+routes.post('/projects',projectController.projectCreate);
+routes.put('/projects/:projectId',projectController.projectUpdate);
+routes.delete('/projects/:projectId',projectController.projectDelete);
+
 
 
 module.exports = routes;
